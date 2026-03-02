@@ -19,6 +19,8 @@ const BackgroundEngine = (() => {
   };
 
   const BG_REMOVAL_THRESHOLD = 60;
+  const MIN_SAMPLE_SIZE = 5;
+  const MAX_SAMPLE_SIZE = 20;
 
   /**
    * Simple foreground segmentation using color-based approach
@@ -45,7 +47,7 @@ const BackgroundEngine = (() => {
 
         // Sample corners to estimate background color
         const samples = [];
-        const sampleSize = Math.max(5, Math.min(20, Math.floor(width * 0.05)));
+        const sampleSize = Math.max(MIN_SAMPLE_SIZE, Math.min(MAX_SAMPLE_SIZE, Math.floor(width * 0.05)));
         for (let y = 0; y < sampleSize; y++) {
           for (let x = 0; x < sampleSize; x++) {
             const idx = (y * width + x) * 4;

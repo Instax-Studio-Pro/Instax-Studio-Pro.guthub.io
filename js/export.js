@@ -146,7 +146,7 @@ const ExportEngine = (() => {
    */
   function exportPDF(framedCanvases, filmType) {
     if (typeof window.jspdf === 'undefined') {
-      showToast('PDF library not loaded. Please check your internet connection and refresh the page.', 'warning');
+      showToast('PDF library could not be loaded. Please refresh the page or try a different browser.', 'warning');
       return;
     }
 
