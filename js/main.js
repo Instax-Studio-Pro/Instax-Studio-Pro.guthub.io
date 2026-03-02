@@ -867,7 +867,10 @@ const App = (() => {
   function updatePreview() {
     if (state.selectedIndex < 0) { clearPreview(); return; }
     const emptyState = document.getElementById('empty-state');
-    if (emptyState) emptyState.classList.add('hidden');
+    if (emptyState) {
+      emptyState.classList.add('hidden');
+      emptyState.style.display = 'none';
+    }
 
     const processed = getProcessedCanvas();
     if (!processed) return;
@@ -988,7 +991,10 @@ const App = (() => {
       previewCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
     }
     const emptyState = document.getElementById('empty-state');
-    if (emptyState) emptyState.classList.remove('hidden');
+    if (emptyState) {
+      emptyState.classList.remove('hidden');
+      emptyState.style.display = 'flex';
+    }
     const frameContainer = document.getElementById('frame-preview');
     if (frameContainer) frameContainer.innerHTML = '<p class="text-gray-500 text-sm">No image selected</p>';
   }
@@ -1157,9 +1163,11 @@ const App = (() => {
       // Flash effect
       const flash = document.getElementById('shutter-flash');
       if (flash) {
+        flash.style.display = 'block';
         flash.classList.remove('hidden');
         flash.classList.add('animate-shutter-flash');
         setTimeout(() => {
+          flash.style.display = 'none';
           flash.classList.add('hidden');
           flash.classList.remove('animate-shutter-flash');
         }, 500);
@@ -1206,6 +1214,7 @@ function showLoading(show) {
   const loader = document.getElementById('loading-overlay');
   if (loader) {
     loader.classList.toggle('hidden', !show);
+    loader.style.display = show ? 'flex' : 'none';
   }
 }
 

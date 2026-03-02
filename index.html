@@ -4,7 +4,28 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Instax Studio Pro – Web Based Instant Photo Print Designer</title>
-  <meta name="description" content="Professional web-based instant photo print designer with Instax-style filters, frames, and export options.">
+  <meta name="description" content="Professional web-based instant photo print designer with Instax-style filters, frames, and export options. Create stunning instant-style photos online.">
+  <meta name="keywords" content="instax, photo editor, instant photo, polaroid style, photo filters, print designer, photo frames">
+  <meta name="author" content="Instax Studio Pro">
+  <meta name="robots" content="index, follow">
+  
+  <!-- Open Graph / Social Media Meta Tags -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Instax Studio Pro – Web Based Instant Photo Print Designer">
+  <meta property="og:description" content="Create stunning instant-style photos with professional filters, frames, and export options.">
+  <meta property="og:site_name" content="Instax Studio Pro">
+  
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Instax Studio Pro – Photo Designer">
+  <meta name="twitter:description" content="Professional web-based instant photo print designer">
+  
+  <!-- Theme Color for Mobile Browsers -->
+  <meta name="theme-color" content="#111827">
+  <meta name="msapplication-TileColor" content="#111827">
+  
+  <!-- Prevent phone number detection -->
+  <meta name="format-detection" content="telephone=no">
 
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -35,14 +56,14 @@
   <link rel="stylesheet" href="css/style.css">
 
   <style>
-    body { font-family: 'Inter', sans-serif; }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
   </style>
 </head>
 
 <body class="bg-charcoal text-white min-h-screen studio-gradient">
 
   <!-- Loading Overlay -->
-  <div id="loading-overlay" class="hidden fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center">
+  <div id="loading-overlay" class="hidden fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center" style="display: none;">
     <div class="flex flex-col items-center gap-4">
       <div class="spinner"></div>
       <p class="text-gold text-sm">Processing...</p>
@@ -50,7 +71,7 @@
   </div>
 
   <!-- Shutter Flash Effect -->
-  <div id="shutter-flash" class="hidden fixed inset-0 bg-white z-40 pointer-events-none"></div>
+  <div id="shutter-flash" class="hidden fixed inset-0 bg-white z-40 pointer-events-none" style="display: none;"></div>
 
   <!-- Toast Container -->
   <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2"></div>
@@ -323,7 +344,7 @@
 
   <!-- ============ FOOTER ============ -->
   <footer class="no-print max-w-7xl mx-auto px-4 py-6 mt-8 border-t border-gray-800 text-center text-xs text-gray-500">
-    <p>Instax Studio Pro &copy; 2024 – Professional Web Based Instant Photo Print Designer</p>
+    <p>Instax Studio Pro &copy; <span id="current-year">2024</span> – Professional Web Based Instant Photo Print Designer</p>
     <p class="mt-1">Made with ❤️ for instant photography enthusiasts</p>
   </footer>
 
@@ -332,6 +353,10 @@
   <script src="js/background.js"></script>
   <script src="js/export.js"></script>
   <script src="js/main.js"></script>
+  <script>
+    // Update footer year dynamically
+    document.getElementById('current-year').textContent = new Date().getFullYear();
+  </script>
 
 </body>
 </html>

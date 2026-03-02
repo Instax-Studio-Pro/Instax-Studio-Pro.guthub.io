@@ -146,48 +146,52 @@ const ExportEngine = (() => {
    */
   function exportPDF(framedCanvases, filmType) {
     if (typeof window.jspdf === 'undefined') {
-      showToast('PDF library loading, please try again in a moment.', 'warning');
+      showToast('PDF library could not be loaded. Please refresh the page or try a different browser.', 'warning');
       return;
     }
 
-    const { jsPDF } = window.jspdf;
-    const size = FILM_SIZES[filmType];
-    const orientation = filmType === 'wide' ? 'landscape' : 'portrait';
+    try {
+      const { jsPDF } = window.jspdf;
+      const size = FILM_SIZES[filmType];
 
-    const pdf = new jsPDF({
-      orientation: 'portrait',
-      unit: 'mm',
-      format: 'a4',
-    });
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+      });
 
-    const pageW = pdf.internal.pageSize.getWidth();
-    const pageH = pdf.internal.pageSize.getHeight();
-    const margin = 10;
+      const pageW = pdf.internal.pageSize.getWidth();
+      const pageH = pdf.internal.pageSize.getHeight();
+      const margin = 10;
 
-    // Calculate how many frames fit per page
-    const frameW = size.filmW;
-    const frameH = size.filmH;
-    const cols = Math.floor((pageW - 2 * margin) / (frameW + 5));
-    const rows = Math.floor((pageH - 2 * margin) / (frameH + 5));
-    const perPage = cols * rows;
+      // Calculate how many frames fit per page
+      const frameW = size.filmW;
+      const frameH = size.filmH;
+      const cols = Math.floor((pageW - 2 * margin) / (frameW + 5));
+      const rows = Math.floor((pageH - 2 * margin) / (frameH + 5));
+      const perPage = cols * rows;
 
-    framedCanvases.forEach((fc, i) => {
-      if (i > 0 && i % perPage === 0) {
-        pdf.addPage();
-      }
+      framedCanvases.forEach((fc, i) => {
+        if (i > 0 && i % perPage === 0) {
+          pdf.addPage();
+        }
 
-      const pageIdx = i % perPage;
-      const col = pageIdx % cols;
-      const row = Math.floor(pageIdx / cols);
-      const x = margin + col * (frameW + 5);
-      const y = margin + row * (frameH + 5);
+        const pageIdx = i % perPage;
+        const col = pageIdx % cols;
+        const row = Math.floor(pageIdx / cols);
+        const x = margin + col * (frameW + 5);
+        const y = margin + row * (frameH + 5);
 
-      const imgData = fc.toDataURL('image/jpeg', 0.95);
-      pdf.addImage(imgData, 'JPEG', x, y, frameW, frameH);
-    });
+        const imgData = fc.toDataURL('image/jpeg', 0.95);
+        pdf.addImage(imgData, 'JPEG', x, y, frameW, frameH);
+      });
 
-    const timestamp = generateTimestamp();
-    pdf.save(`instax-studio-${timestamp}.pdf`);
+      const timestamp = generateTimestamp();
+      pdf.save(`instax-studio-${timestamp}.pdf`);
+    } catch (error) {
+      console.error('PDF export error:', error);
+      showToast('Failed to export PDF. Please try again.', 'error');
+    }
   }
 
   /**

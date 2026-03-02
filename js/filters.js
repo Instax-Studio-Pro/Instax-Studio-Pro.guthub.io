@@ -256,55 +256,69 @@ const FilterEngine = (() => {
    * Process an image with a preset filter and manual adjustments
    */
   function processImage(sourceCanvas, presetKey, manualAdjustments) {
-    const width = sourceCanvas.width;
-    const height = sourceCanvas.height;
+    if (!sourceCanvas) return null;
+    
+    try {
+      const width = sourceCanvas.width;
+      const height = sourceCanvas.height;
 
-    const outputCanvas = document.createElement('canvas');
-    outputCanvas.width = width;
-    outputCanvas.height = height;
-    const ctx = outputCanvas.getContext('2d');
+      const outputCanvas = document.createElement('canvas');
+      outputCanvas.width = width;
+      outputCanvas.height = height;
+      const ctx = outputCanvas.getContext('2d');
 
-    // Draw source image
-    ctx.drawImage(sourceCanvas, 0, 0);
+      // Draw source image
+      ctx.drawImage(sourceCanvas, 0, 0);
 
-    // Apply preset filter if any
-    const preset = PRESETS[presetKey];
-    if (preset && preset.apply) {
-      preset.apply(ctx, width, height);
+      // Apply preset filter if any
+      const preset = PRESETS[presetKey];
+      if (preset && preset.apply) {
+        preset.apply(ctx, width, height);
+      }
+
+      // Apply manual adjustments on top
+      if (manualAdjustments) {
+        applyAdjustments(ctx, width, height, manualAdjustments);
+      }
+
+      return outputCanvas;
+    } catch (error) {
+      console.error('Error processing image:', error);
+      return sourceCanvas;
     }
-
-    // Apply manual adjustments on top
-    if (manualAdjustments) {
-      applyAdjustments(ctx, width, height, manualAdjustments);
-    }
-
-    return outputCanvas;
   }
 
   /**
    * Generate a small preview thumbnail for a filter preset
    */
   function generatePreview(sourceCanvas, presetKey, size = 60) {
-    const preview = document.createElement('canvas');
-    preview.width = size;
-    preview.height = size;
-    const ctx = preview.getContext('2d');
+    if (!sourceCanvas) return '';
+    
+    try {
+      const preview = document.createElement('canvas');
+      preview.width = size;
+      preview.height = size;
+      const ctx = preview.getContext('2d');
 
-    // Draw scaled source
-    const srcRatio = sourceCanvas.width / sourceCanvas.height;
-    let sw = size, sh = size;
-    if (srcRatio > 1) { sh = size / srcRatio; } else { sw = size * srcRatio; }
-    const sx = (size - sw) / 2;
-    const sy = (size - sh) / 2;
-    ctx.drawImage(sourceCanvas, sx, sy, sw, sh);
+      // Draw scaled source
+      const srcRatio = sourceCanvas.width / sourceCanvas.height;
+      let sw = size, sh = size;
+      if (srcRatio > 1) { sh = size / srcRatio; } else { sw = size * srcRatio; }
+      const sx = (size - sw) / 2;
+      const sy = (size - sh) / 2;
+      ctx.drawImage(sourceCanvas, sx, sy, sw, sh);
 
-    // Apply preset
-    const preset = PRESETS[presetKey];
-    if (preset && preset.apply) {
-      preset.apply(ctx, size, size);
+      // Apply preset
+      const preset = PRESETS[presetKey];
+      if (preset && preset.apply) {
+        preset.apply(ctx, size, size);
+      }
+
+      return preview.toDataURL('image/jpeg', 0.6);
+    } catch (error) {
+      console.error('Error generating preview:', error);
+      return '';
     }
-
-    return preview.toDataURL('image/jpeg', 0.6);
   }
 
   return {
