@@ -25,57 +25,67 @@ const BackgroundEngine = (() => {
    * This is a basic implementation; for production, use TensorFlow.js or remove.bg API
    */
   function removeBackground(sourceCanvas) {
-    return new Promise((resolve) => {
-      const width = sourceCanvas.width;
-      const height = sourceCanvas.height;
-      const outputCanvas = document.createElement('canvas');
-      outputCanvas.width = width;
-      outputCanvas.height = height;
-      const ctx = outputCanvas.getContext('2d');
-      ctx.drawImage(sourceCanvas, 0, 0);
-
-      const imageData = ctx.getImageData(0, 0, width, height);
-      const d = imageData.data;
-
-      // Sample corners to estimate background color
-      const samples = [];
-      const sampleSize = Math.min(20, Math.floor(width * 0.05));
-      for (let y = 0; y < sampleSize; y++) {
-        for (let x = 0; x < sampleSize; x++) {
-          const idx = (y * width + x) * 4;
-          samples.push([d[idx], d[idx + 1], d[idx + 2]]);
+    return new Promise((resolve, reject) => {
+      try {
+        if (!sourceCanvas) {
+          reject(new Error('No source canvas provided'));
+          return;
         }
-      }
-      for (let y = 0; y < sampleSize; y++) {
-        for (let x = width - sampleSize; x < width; x++) {
-          const idx = (y * width + x) * 4;
-          samples.push([d[idx], d[idx + 1], d[idx + 2]]);
+        
+        const width = sourceCanvas.width;
+        const height = sourceCanvas.height;
+        const outputCanvas = document.createElement('canvas');
+        outputCanvas.width = width;
+        outputCanvas.height = height;
+        const ctx = outputCanvas.getContext('2d');
+        ctx.drawImage(sourceCanvas, 0, 0);
+
+        const imageData = ctx.getImageData(0, 0, width, height);
+        const d = imageData.data;
+
+        // Sample corners to estimate background color
+        const samples = [];
+        const sampleSize = Math.max(5, Math.min(20, Math.floor(width * 0.05)));
+        for (let y = 0; y < sampleSize; y++) {
+          for (let x = 0; x < sampleSize; x++) {
+            const idx = (y * width + x) * 4;
+            samples.push([d[idx], d[idx + 1], d[idx + 2]]);
+          }
         }
-      }
-
-      // Calculate average background color
-      let avgR = 0, avgG = 0, avgB = 0;
-      samples.forEach(s => { avgR += s[0]; avgG += s[1]; avgB += s[2]; });
-      avgR /= samples.length;
-      avgG /= samples.length;
-      avgB /= samples.length;
-
-      // Remove pixels similar to background
-      const threshold = BG_REMOVAL_THRESHOLD;
-      for (let i = 0; i < d.length; i += 4) {
-        const dr = d[i] - avgR;
-        const dg = d[i + 1] - avgG;
-        const db = d[i + 2] - avgB;
-        const dist = Math.sqrt(dr * dr + dg * dg + db * db);
-        if (dist < threshold) {
-          d[i + 3] = 0; // Make transparent
-        } else if (dist < threshold * 1.5) {
-          d[i + 3] = Math.floor(255 * ((dist - threshold) / (threshold * 0.5)));
+        for (let y = 0; y < sampleSize; y++) {
+          for (let x = width - sampleSize; x < width; x++) {
+            const idx = (y * width + x) * 4;
+            samples.push([d[idx], d[idx + 1], d[idx + 2]]);
+          }
         }
-      }
 
-      ctx.putImageData(imageData, 0, 0);
-      resolve(outputCanvas);
+        // Calculate average background color
+        let avgR = 0, avgG = 0, avgB = 0;
+        samples.forEach(s => { avgR += s[0]; avgG += s[1]; avgB += s[2]; });
+        avgR /= samples.length;
+        avgG /= samples.length;
+        avgB /= samples.length;
+
+        // Remove pixels similar to background
+        const threshold = BG_REMOVAL_THRESHOLD;
+        for (let i = 0; i < d.length; i += 4) {
+          const dr = d[i] - avgR;
+          const dg = d[i + 1] - avgG;
+          const db = d[i + 2] - avgB;
+          const dist = Math.sqrt(dr * dr + dg * dg + db * db);
+          if (dist < threshold) {
+            d[i + 3] = 0; // Make transparent
+          } else if (dist < threshold * 1.5) {
+            d[i + 3] = Math.floor(255 * ((dist - threshold) / (threshold * 0.5)));
+          }
+        }
+
+        ctx.putImageData(imageData, 0, 0);
+        resolve(outputCanvas);
+      } catch (error) {
+        console.error('Error removing background:', error);
+        resolve(sourceCanvas); // Return original canvas on error
+      }
     });
   }
 
@@ -83,40 +93,47 @@ const BackgroundEngine = (() => {
    * Apply a background preset to a foreground canvas
    */
   function applyBackground(foregroundCanvas, presetKey, originalCanvas) {
-    const width = foregroundCanvas.width;
-    const height = foregroundCanvas.height;
-    const outputCanvas = document.createElement('canvas');
-    outputCanvas.width = width;
-    outputCanvas.height = height;
-    const ctx = outputCanvas.getContext('2d');
+    if (!foregroundCanvas) return null;
+    
+    try {
+      const width = foregroundCanvas.width;
+      const height = foregroundCanvas.height;
+      const outputCanvas = document.createElement('canvas');
+      outputCanvas.width = width;
+      outputCanvas.height = height;
+      const ctx = outputCanvas.getContext('2d');
 
-    const preset = PRESETS[presetKey];
+      const preset = PRESETS[presetKey];
 
-    if (!preset || preset.type === 'none') {
-      ctx.drawImage(originalCanvas || foregroundCanvas, 0, 0);
+      if (!preset || preset.type === 'none') {
+        ctx.drawImage(originalCanvas || foregroundCanvas, 0, 0);
+        return outputCanvas;
+      }
+
+      if (preset.type === 'solid') {
+        ctx.fillStyle = preset.color;
+        ctx.fillRect(0, 0, width, height);
+      } else if (preset.type === 'gradient') {
+        const gradient = ctx.createLinearGradient(0, 0, 0, height);
+        const colors = preset.gradient;
+        colors.forEach((c, i) => {
+          gradient.addColorStop(i / (colors.length - 1), c);
+        });
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, width, height);
+      } else if (preset.type === 'blurred' && originalCanvas) {
+        ctx.filter = 'blur(15px)';
+        ctx.drawImage(originalCanvas, -20, -20, width + 40, height + 40);
+        ctx.filter = 'none';
+      }
+
+      // Draw foreground on top
+      ctx.drawImage(foregroundCanvas, 0, 0);
       return outputCanvas;
+    } catch (error) {
+      console.error('Error applying background:', error);
+      return foregroundCanvas;
     }
-
-    if (preset.type === 'solid') {
-      ctx.fillStyle = preset.color;
-      ctx.fillRect(0, 0, width, height);
-    } else if (preset.type === 'gradient') {
-      const gradient = ctx.createLinearGradient(0, 0, 0, height);
-      const colors = preset.gradient;
-      colors.forEach((c, i) => {
-        gradient.addColorStop(i / (colors.length - 1), c);
-      });
-      ctx.fillStyle = gradient;
-      ctx.fillRect(0, 0, width, height);
-    } else if (preset.type === 'blurred' && originalCanvas) {
-      ctx.filter = 'blur(15px)';
-      ctx.drawImage(originalCanvas, -20, -20, width + 40, height + 40);
-      ctx.filter = 'none';
-    }
-
-    // Draw foreground on top
-    ctx.drawImage(foregroundCanvas, 0, 0);
-    return outputCanvas;
   }
 
   return {
